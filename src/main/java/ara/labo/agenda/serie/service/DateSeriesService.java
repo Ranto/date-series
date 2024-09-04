@@ -5,6 +5,6 @@ import ara.labo.agenda.serie.model.Recurrence;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface DateSerieService {
+public interface DateSeriesService {
     List<LocalDate> createDateListFromRecurrence(Recurrence recurrence);
 }

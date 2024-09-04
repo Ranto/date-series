@@ -8,21 +8,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class DateSerieServiceImpl implements DateSerieService {
+import static ara.labo.agenda.serie.model.Frequency.WEEKLY;
 
-    public DateSerieServiceImpl() {
+public class DateSeriesServiceImpl implements DateSeriesService {
+
+    public DateSeriesServiceImpl() {
     }
 
     @Override
     public List<LocalDate> createDateListFromRecurrence(Recurrence recurrence) {
         LocalDate startDate = recurrence.getStartDate();
         List<LocalDate> dateList = new ArrayList<>();
-        dateList.add(startDate);
 
         LocalDate nextDate = startDate;
         int occurrenceCount = 0;
 
         do {
+            dateList.add(nextDate);
             switch (recurrence.getFrequency()) {
                 case DAILY:
                     nextDate = nextDate.plusDays(recurrence.getInterval());
@@ -35,7 +37,6 @@ public class DateSerieServiceImpl implements DateSerieService {
                     break;
             }
 
-            dateList.add(nextDate);
             occurrenceCount++;
         } while (!isListFinished(recurrence, occurrenceCount, nextDate));
 
@@ -54,7 +55,7 @@ public class DateSerieServiceImpl implements DateSerieService {
         if (dateToCheck == null) {
             return false;
         }
-        return recurrence.getEndDate().isBefore(dateToCheck);
+        return dateToCheck.isAfter(recurrence.getEndDate());
     }
 
     boolean isListFinished(Recurrence recurrence, int currentOccurrence, LocalDate lastAddedDate) {
@@ -62,6 +63,10 @@ public class DateSerieServiceImpl implements DateSerieService {
     }
 
     LocalDate getNextDateWithWeeklyFrequency(Recurrence recurrence, LocalDate lastDate) {
+        if (!WEEKLY.equals(recurrence.getFrequency())) {
+            throw new IllegalArgumentException("Frequency must be WEEKLY");
+        }
+
         if (recurrence.getDays().isEmpty()) {
             return lastDate.plusDays(recurrence.getInterval() * 7L);
         }
@@ -84,7 +89,7 @@ public class DateSerieServiceImpl implements DateSerieService {
 
     int getDaysIntervalBetweenTwoDaysOfWeek(DayOfWeek lastDayOfWeek, DayOfWeek nextDayOfWeek, int recurrenceInterval) {
         int interval = nextDayOfWeek.getValue() - lastDayOfWeek.getValue();
-        if (interval < 0) {
+        if (interval <= 0) {
             return nextDayOfWeek.getValue() + (7 * recurrenceInterval) - lastDayOfWeek.getValue();
         }
         return interval;
