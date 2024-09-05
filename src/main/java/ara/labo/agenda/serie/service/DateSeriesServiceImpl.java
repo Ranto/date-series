@@ -24,7 +24,15 @@ public class DateSeriesServiceImpl implements DateSeriesService {
         int occurrenceCount = 0;
 
         do {
-            dateList.add(nextDate);
+            if (occurrenceCount == 0) {
+                if (isDateCanBeAddedToWeeklyRecurrence(recurrence, nextDate)) {
+                    dateList.add(nextDate);
+                } else {
+                    occurrenceCount = -1;
+                }
+            } else {
+                dateList.add(nextDate);
+            }
             switch (recurrence.getFrequency()) {
                 case DAILY:
                     nextDate = nextDate.plusDays(recurrence.getInterval());
@@ -32,7 +40,7 @@ public class DateSeriesServiceImpl implements DateSeriesService {
                 case WEEKLY:
                     nextDate = getNextDateWithWeeklyFrequency(recurrence, nextDate);
                     break;
-                case MONTHLY:
+                default:
                     nextDate = nextDate.plusMonths(recurrence.getInterval());
                     break;
             }
@@ -41,6 +49,13 @@ public class DateSeriesServiceImpl implements DateSeriesService {
         } while (!isListFinished(recurrence, occurrenceCount, nextDate));
 
         return dateList;
+    }
+
+    boolean isDateCanBeAddedToWeeklyRecurrence(Recurrence recurrence, LocalDate dateToCheck) {
+        if (!recurrence.getDays().isEmpty() && recurrence.getFrequency().equals(WEEKLY)) {
+            return recurrence.getDays().contains(dateToCheck.getDayOfWeek());
+        }
+        return true;
     }
 
 
@@ -52,9 +67,6 @@ public class DateSeriesServiceImpl implements DateSeriesService {
     }
 
     boolean isNextDateOutOfRange(Recurrence recurrence, LocalDate dateToCheck) {
-        if (dateToCheck == null) {
-            return false;
-        }
         return dateToCheck.isAfter(recurrence.getEndDate());
     }
 
@@ -63,10 +75,6 @@ public class DateSeriesServiceImpl implements DateSeriesService {
     }
 
     LocalDate getNextDateWithWeeklyFrequency(Recurrence recurrence, LocalDate lastDate) {
-        if (!WEEKLY.equals(recurrence.getFrequency())) {
-            throw new IllegalArgumentException("Frequency must be WEEKLY");
-        }
-
         if (recurrence.getDays().isEmpty()) {
             return lastDate.plusDays(recurrence.getInterval() * 7L);
         }
